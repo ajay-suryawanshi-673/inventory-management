@@ -38,7 +38,7 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 }

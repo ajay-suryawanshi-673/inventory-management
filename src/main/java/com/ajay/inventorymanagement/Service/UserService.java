@@ -10,22 +10,44 @@ import com.ajay.inventorymanagement.repository.RoleRepository;
 import com.ajay.inventorymanagement.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.ajay.inventorymanagement.security.JwtService;
 
 import java.util.List;
 
 @Service
 public class UserService {
-
+    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public LoginResponse login(LoginRequest request) {
+
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.email(),
+                                request.password()
+                        )
+                );
+
+        String token = jwtService.generateToken(authentication);
+
+        return new LoginResponse(token);
+    }
+
+    public UserService(AuthenticationManager authenticationManager, UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository= roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public boolean emailExists(String email){
@@ -64,9 +86,7 @@ public class UserService {
         );
     }
 
-    public LoginResponse login(LoginRequest request) {
-        return null;
-    }
+
 
 
     public UserResponse getUserById(Long id) {
@@ -141,6 +161,7 @@ public class UserService {
                 .searchUsers(keyword, pageable)
                 .map(this::mapToUserResponse);
     }
+
     private UserResponse mapToUserResponse(User user) {
 
         return new UserResponse(
